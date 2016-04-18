@@ -4,7 +4,7 @@ import time
 
 import jsonpatch
 
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from .exceptions import ObjectDoesNotExist
 from .query import ObjectManager
 
@@ -179,7 +179,11 @@ class Pod(NamespacedAPIObject):
     def get_logs(self, container=None, pretty=None, previous=False,
                  since_seconds=None, since_time=None, timestamps=False,
                  tail_lines=None, limit_bytes=None):
-        """Produces the same result as calling kubectl logs pod/<pod-name>"""
+        """
+        Produces the same result as calling kubectl logs pod/<pod-name>.
+        Check parameters meaning at http://kubernetes.io/docs/api-reference/v1/operations/,
+        part 'read log of the specified Pod'. The result is plain text.
+        """
         url = "log"
         params = {}
         if container is not None:
