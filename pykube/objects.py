@@ -191,7 +191,7 @@ class Pod(NamespacedAPIObject):
         condition = next((c for c in cs if c["type"] == "Ready"), None)
         return condition is not None and condition["status"] == "True"
 
-    def get_logs(self, container=None, pretty=None, previous=False,
+    def logs(self, container=None, pretty=None, previous=False,
                  since_seconds=None, since_time=None, timestamps=False,
                  tail_lines=None, limit_bytes=None):
         """
@@ -220,8 +220,8 @@ class Pod(NamespacedAPIObject):
 
         query_string = urlencode(params)
         url += "?{}".format(query_string) if query_string else ""
-        kwargs = {'url': url, 'pods': self.name,
-                  'namespace': self.namespace, 'version': self.version}
+        kwargs = {"url": url, "pods": self.name,
+                  "namespace": self.namespace, "version": self.version}
         r = self.api.get(**kwargs)
         r.raise_for_status()
         return r.text
