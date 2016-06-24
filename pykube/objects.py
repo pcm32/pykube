@@ -160,7 +160,7 @@ class Job(NamespacedAPIObject):
         self.update()
         while True:
             self.reload()
-            if self.self.obj['spec']['parallelism'] == parallelism:
+            if self.obj['spec']['parallelism'] == parallelism:
                 break
             time.sleep(1)
 
