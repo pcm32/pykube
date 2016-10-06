@@ -43,6 +43,12 @@ class HTTPClient(object):
             warnings.warn("IP address hostnames are not supported with Python < 3.5. Please see https://github.com/kelproject/pykube/issues/29 for more info.", RuntimeWarning)
         self._url = pr.geturl()
 
+    def _set_bearer_token(self, session, token):
+        """
+        Set the bearer authorization token for the session.
+        """
+        session.headers["Authorization"] = "Bearer {}".format(token)
+
     def build_session(self):
         """
         Creates a new session for the client.
@@ -50,13 +56,21 @@ class HTTPClient(object):
         s = requests.Session()
         if "certificate-authority" in self.config.cluster:
             s.verify = self.config.cluster["certificate-authority"].filename()
+        elif "insecure-skip-tls-verify" in self.config.cluster:
+            s.verify = not self.config.cluster["insecure-skip-tls-verify"]
         if "token" in self.config.user and self.config.user["token"]:
-            s.headers["Authorization"] = "Bearer {}".format(self.config.user["token"])
+            self._set_bearer_token(s, self.config.user["token"])
+        elif "auth-provider" in self.config.user:
+            token = self.config.user['auth-provider'].get('config', {}).get('access-token')
+            if token is not None:
+                self._set_bearer_token(s, token)
         elif "client-certificate" in self.config.user:
             s.cert = (
                 self.config.user["client-certificate"].filename(),
                 self.config.user["client-key"].filename(),
             )
+        elif self.config.user.get("username") and self.config.user.get("password"):
+            s.auth = (self.config.user["username"], self.config.user["password"])
         else:  # no user present; don't configure anything
             pass
         return s
@@ -71,7 +85,7 @@ class HTTPClient(object):
         version = kwargs.pop("version", "v1")
         if version == "v1":
             base = kwargs.pop("base", "/api")
-        elif any(map(version.startswith, ["extensions/", "batch/"])):
+        elif "/" in version:
             base = kwargs.pop("base", "/apis")
         else:
             if "base" not in kwargs:
@@ -101,7 +115,7 @@ class HTTPClient(object):
             if resp.headers["content-type"] == "application/json":
                 payload = resp.json()
                 if payload["kind"] == "Status":
-                    raise HTTPError(payload["message"])
+                    raise HTTPError(resp.status_code, payload["message"])
             raise
 
     def request(self, *args, **kwargs):

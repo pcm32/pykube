@@ -128,6 +128,13 @@ class Deployment(NamespacedAPIObject, ReplicatedMixin, ScalableMixin):
     endpoint = "deployments"
     kind = "Deployment"
 
+    @property
+    def ready(self):
+        return (
+            self.obj["status"]["observedGeneration"] >= self.obj["metadata"]["generation"] and
+            self.obj["status"]["updatedReplicas"] == self.replicas
+        )
+
 
 class Endpoint(NamespacedAPIObject):
 
@@ -136,11 +143,39 @@ class Endpoint(NamespacedAPIObject):
     kind = "Endpoint"
 
 
+class Event(NamespacedAPIObject):
+
+    version = "v1"
+    endpoint = "events"
+    kind = "Event"
+
+
+class ResourceQuota(NamespacedAPIObject):
+
+    version = "v1"
+    endpoint = "resourcequotas"
+    kind = "ResourceQuota"
+
+
+class ServiceAccount(NamespacedAPIObject):
+
+    version = "v1"
+    endpoint = "serviceaccounts"
+    kind = "ServiceAccount"
+
+
 class Ingress(NamespacedAPIObject):
 
     version = "extensions/v1beta1"
     endpoint = "ingresses"
     kind = "Ingress"
+
+
+class ThirdPartyResource(APIObject):
+
+    version = "extensions/v1beta1"
+    endpoint = "thirdpartyresources"
+    kind = "ThirdPartyResource"
 
 
 class Job(NamespacedAPIObject, ScalableMixin):
@@ -171,6 +206,23 @@ class Node(APIObject):
     version = "v1"
     endpoint = "nodes"
     kind = "Node"
+
+    @property
+    def unschedulable(self):
+        if 'unschedulable' in self.obj["spec"]:
+            return self.obj["spec"]["unschedulable"]
+        return False
+
+    @unschedulable.setter
+    def unschedulable(self, value):
+        self.obj["spec"]["unschedulable"] = value
+        self.update()
+
+    def cordon(self):
+        self.unschedulable = True
+
+    def uncordon(self):
+        self.unschedulable = False
 
 
 class Pod(NamespacedAPIObject):
@@ -226,3 +278,45 @@ class PersistentVolumeClaim(NamespacedAPIObject):
     version = "v1"
     endpoint = "persistentvolumeclaims"
     kind = "PersistentVolumeClaim"
+
+
+class HorizontalPodAutoscaler(NamespacedAPIObject):
+
+    version = "autoscaling/v1"
+    endpoint = "horizontalpodautoscalers"
+    kind = "HorizontalPodAutoscaler"
+
+
+class PetSet(NamespacedAPIObject):
+
+    version = "apps/v1alpha1"
+    endpoint = "petsets"
+    kind = "PetSet"
+
+
+class Role(NamespacedAPIObject):
+
+    version = "rbac.authorization.k8s.io/v1alpha1"
+    endpoint = "roles"
+    kind = "Role"
+
+
+class RoleBinding(NamespacedAPIObject):
+
+    version = "rbac.authorization.k8s.io/v1alpha1"
+    endpoint = "rolebindings"
+    kind = "RoleBinding"
+
+
+class ClusterRole(APIObject):
+
+    version = "rbac.authorization.k8s.io/v1alpha1"
+    endpoint = "clusterroles"
+    kind = "ClusterRole"
+
+
+class ClusterRoleBinding(APIObject):
+
+    version = "rbac.authorization.k8s.io/v1alpha1"
+    endpoint = "clusterrolebindings"
+    kind = "ClusterRoleBinding"

@@ -146,6 +146,8 @@ class WatchQuery(BaseQuery):
             "url": url,
             "stream": True,
         }
+        if self.api_obj_class.version:
+            kwargs["version"] = self.api_obj_class.version
         r = self.api.get(**kwargs)
         self.api.raise_for_status(r)
         WatchEvent = namedtuple("WatchEvent", "type object")
@@ -196,5 +198,5 @@ def as_selector(value):
         elif op == "notin":
             s.append("{} notin ({})".format(label, ",".join(v)))
         else:
-            raise ValueError("{} is not a valid comparsion operator".format(op))
+            raise ValueError("{} is not a valid comparison operator".format(op))
     return ",".join(s)
